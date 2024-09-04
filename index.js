@@ -4,9 +4,12 @@ import { Neo4jGraphQL } from "@neo4j/graphql";
 import neo4j from "neo4j-driver";
 import { typeDefs } from './graphql-schema.js';
 
+const user = process.env.NEO4J_USER;
+const password = process.env.NEO4J_PASSWORD;
+
 const driver = neo4j.driver(
     "bolt://localhost:7687",
-    neo4j.auth.basic("graphql-client", "4k%ygEs$bcQL2VyuXPR7P*C%4exs#6ftKVv&9M^zSkpV6rZbjhnQsmcc%dm4Zf!S")
+    neo4j.auth.basic(user, password)
 );
 
 const neoSchema = new Neo4jGraphQL({ typeDefs, driver });
@@ -17,7 +20,7 @@ const server = new ApolloServer({
 
 console.log("Setting up server...");
 const { url } = await startStandaloneServer(server, {
-    context: async ({ req }) => ({ req, sessionConfig: { database: 'opensecrets' } }),
+    context: async ({ req }) => ({ req, sessionConfig: { database: 'lobbying' } }),
     listen: { port: 4000 },
 });
 
