@@ -1,8 +1,8 @@
 export const typeDefs = `#graphql
 type Firm {
     Name: String!
-    lobbyingRecords: [LobbyingRecord!]! @relationship(type: "CLIENT_ON", direction: OUT)
-    lobbyingRecordsRegistrant: [LobbyingRecord!]! @relationship(type: "REGISTRANT_OF", direction: OUT)
+    lobbyingRecords: [LobbyingRecord!]! @relationship(type: "CLIENT", direction: IN)
+    lobbyingRecordsRegistrant: [LobbyingRecord!]! @relationship(type: "REGISTRANT_ON", direction: OUT)
     subsidiaries: [Firm!]! @relationship(type: "PARENT_OF", direction: OUT)
     parent: Firm @relationship(type: "PARENT_OF", direction: IN)
     categories: [Category!]! @relationship(type: "IS_IN_CATEGORY", direction: OUT)
@@ -22,7 +22,7 @@ type LobbyingRecord {
     IncludeNSFS: Boolean
     Ind: Boolean
     Affiliate: Boolean
-    client: Firm! @relationship(type: "CLIENT", direction: IN)
+    client: Firm! @relationship(type: "CLIENT", direction: OUT)
     registrant: Firm! @relationship(type: "REGISTRANT_ON", direction: IN)
     specificIssue: [SpecificIssue!]! @relationship(type: "CONCERNS", direction: OUT)
     agenciesLobbied: [Agency!]! @relationship(type: "LOBBIED_AT", direction: OUT)
