@@ -10,6 +10,29 @@ type Firm {
     board: [Person!]! @relationship(type: "BOARD_AT", direction: IN)
 }
 
+extend type Firm {
+    lobbyingRecordsByYear(year: Int): [LobbyingRecord!]!
+    totalLobbyingYear(year: Int): Float @cypher(statement:"""
+            MATCH (this)<-[:CLIENT]-(lr:LobbyingRecord)
+            WHERE lr.Year = $year
+            RETURN SUM(lr.Amount) AS total
+        """,
+        columnName: "total")
+    sectors: [String] @cypher(statement: """
+            MATCH (this)-[:IS_IN_CATEGORY]->(:Category)-[:IS_IN_INDUSTRY]->(:Industry)-[:IS_IN_SECTOR]->(s:Sector)
+            RETURN DISTINCT s.Name AS sectors
+    """, columnName: "sectors")
+    industries: [String] @cypher(statement: """
+            MATCH (this)-[:IS_IN_CATEGORY]->(:Category)-[:IS_IN_INDUSTRY]->(i:Industry)
+            RETURN DISTINCT i.Name AS industries
+    """, columnName: "industries")
+    issuesLobbied(year: Int): [String] @cypher(statement: """
+            MATCH (this)<-[:CLIENT]-(lr:LobbyingRecord)-[:CONCERNS]->(si:SpecificIssue)-[:MAIN_ISSUE]->(i:Issue)
+            WHERE lr.Year = $year
+            RETURN DISTINCT i.Issue AS issues
+    """, columnName: "issues")
+}
+
 type LobbyingRecord {
     Uniqid: String!
     IsFirm: Boolean
@@ -62,7 +85,7 @@ type SpecificIssue {
 
 type Issue {
     IssueID: String!
-    Name: String!
+    Issue: String!
     specificIssues: [SpecificIssue!]! @relationship(type: "MAIN_ISSUE", direction: IN)
 }
 
@@ -70,6 +93,24 @@ type Person {
     Name: String!
     firmsWorked: [Firm!]! @relationship(type: "WORKED_AT", direction: OUT)
     firmsBoardAt: [Firm!]! @relationship(type: "BOARD_AT", direction: OUT)
+}
+
+type Query {
+    TopSpendingFirms(year: Int, minSpent: Float, options: FirmOptions): [Firm] @cypher(statement: """
+        MATCH (f:Firm)<-[:CLIENT]-(lr:LobbyingRecord)
+        WHERE lr.Year = $year
+        WITH f, SUM(lr.Amount) AS total
+        WHERE total > $minSpent
+        RETURN f
+        SKIP $options.offset
+        LIMIT $options.limit""", columnName: "f")
+    TopFirmsCount(year: Int, minSpent: Float): Int! @cypher(statement: """
+        MATCH (f:Firm)<-[:CLIENT]-(lr:LobbyingRecord)
+        WHERE lr.Year = $year
+        WITH f, SUM(lr.Amount) AS total
+        WHERE total > $minSpent
+        RETURN COUNT(f) AS count
+    """, columnName: "count")
 }
 
 extend schema @mutation(operations: [])
