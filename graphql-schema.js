@@ -31,6 +31,11 @@ extend type Firm {
             WHERE lr.Year = $year
             RETURN DISTINCT i.Issue AS issues
     """, columnName: "issues")
+    agenciesLobbied(year: Int): [String] @cypher(statement: """
+            MATCH (this)<-[:CLIENT]-(lr:LobbyingRecord)-[:LOBBIED_AT]->(a:Agency)
+            WHERE lr.Year = $year
+            RETURN DISTINCT a.Name AS agencies
+    """, columnName: "agencies")
 }
 
 type LobbyingRecord {
