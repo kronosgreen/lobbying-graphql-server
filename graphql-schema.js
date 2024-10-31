@@ -8,6 +8,7 @@ type Firm {
     categories: [Category!]! @relationship(type: "IS_IN_CATEGORY", direction: OUT)
     worked: [Person!]! @relationship(type: "WORKED_AT", direction: IN)
     board: [Person!]! @relationship(type: "BOARD_AT", direction: IN)
+    annualFundamentals: [AnnualFundamental!]! @relationship(type: "ANNUAL_PERFORMANCE", direction: OUT)
 }
 
 extend type Firm {
@@ -36,6 +37,11 @@ extend type Firm {
             WHERE lr.Year = $year
             RETURN DISTINCT a.Name AS agencies
     """, columnName: "agencies")
+    performanceOnYearAndPrev(year: Int): [AnnualFundamental] @cypher(statement: """
+            MATCH (this)-[ap:ANNUAL_PERFORMANCE]->(af:AnnualFundamental)
+            WHERE ap.Year = $year OR ap.Year = $year - 1
+            RETURN af AS fundamentals
+    """, columnName: "fundamentals")
 }
 
 type LobbyingRecord {
@@ -54,6 +60,25 @@ type LobbyingRecord {
     registrant: Firm! @relationship(type: "REGISTRANT_ON", direction: IN)
     specificIssue: [SpecificIssue!]! @relationship(type: "CONCERNS", direction: OUT)
     agenciesLobbied: [Agency!]! @relationship(type: "LOBBIED_AT", direction: OUT)
+}
+
+type AnnualFundamental {
+    ID: String!
+    Company: String
+    TickerSymbol: String
+    CurrentISOCountryCode: String
+    Year: Int
+    CommonSharesOutstanding: Float
+    MarketValue: Float
+    CostOfGoodsSold: Float
+    EBITDA: Float
+    SalesTurnover_Net: Float
+    PriceCloseF: Float
+    PriceHighF: Float
+    PriceLowF: Float
+    Currency: String
+    Next: AnnualFundamental @relationship(type: "NEXT", direction: OUT)
+    Prev: AnnualFundamental @relationship(type: "PREV", direction: IN)
 }
 
 type Category {
